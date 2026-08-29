@@ -208,3 +208,14 @@ export const contentCache = pgTable(
     expiresAtIdx: index("content_cache_expires_at_idx").on(t.expiresAt),
   })
 );
+
+// ────────────────────────────────────────────────────────────────────────────
+// Table: sessions  (Lucia auth sessions — see db/migrations/0001_sessions.sql)
+// ────────────────────────────────────────────────────────────────────────────
+export const sessions = pgTable("sessions", {
+  id: varchar("id", { length: 255 }).primaryKey(),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+});
