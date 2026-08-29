@@ -19,8 +19,47 @@
   }
 }
 
+html {
+  /* 防止 iOS 横屏时文字自动放大 */
+  -webkit-text-size-adjust: 100%;
+  /* 移动端轻点高亮：极淡灰底色；组件可用 Tailwind active: 自定义反馈 */
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0.05);
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  /* 安全区适配：刘海/底部 Home Indicator 不遮挡内容 */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* iOS Safari：输入聚焦时若 font-size < 16px 会自动缩放页面，统一 ≥ 1rem(16px) */
+input,
+select,
+textarea {
+  font-size: 1rem;
+}
+
+/* Apple HIG：触摸目标 ≥ 44px。
+   仅在移动端（lg 断点以下）对未显式设置 min-h 的元素生效，
+   避免覆盖更大的自定义高度（如 textarea min-h-[120px]）或破坏桌面端紧凑密度。 */
+@media (max-width: 1023px) {
+  button:not([class*="min-h"]),
+  a:not([class*="min-h"]),
+  select:not([class*="min-h"]),
+  textarea:not([class*="min-h"]),
+  input:not([class*="min-h"]):not([type="checkbox"]):not([type="radio"]):not(
+      [type="range"]
+    ) {
+    min-height: 44px;
+  }
+}
+
+/* 响应式媒体：图片/视频不溢出容器 */
+img,
+video {
+  max-width: 100%;
+  height: auto;
 }
