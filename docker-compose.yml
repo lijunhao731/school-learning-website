@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: school_learning
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db/migrations:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d school_learning"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      target: dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - uploads:/app/uploads
+    environment:
+      DATABASE_URL: postgresql://postgres:password@postgres:5432/school_learning
+      LLM_API_KEY: ${LLM_API_KEY}
+      LLM_BASE_URL: ${LLM_BASE_URL:-http://36.133.77.84:64025/v1}
+      LLM_MODEL_PREFERRED: ${LLM_MODEL_PREFERRED:-mm-l2}
+      LLM_MODEL_FALLBACK: ${LLM_MODEL_FALLBACK:-mm-l1}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  uploads:
