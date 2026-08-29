@@ -1,0 +1,13 @@
+{$DOMAIN:localhost} {
+	reverse_proxy app:3000 {
+		# 关闭缓冲以支持 SSE 流式响应
+		flush_interval -1
+	}
+
+	# 静态文件缓存
+	@static path /_next/static/* /uploads/*
+	handle @static {
+		header Cache-Control "public, max-age=86400"
+		reverse_proxy app:3000
+	}
+}
