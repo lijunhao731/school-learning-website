@@ -32,9 +32,11 @@ function buildUserPrompt(params: AnalyzeErrorParams): string {
 分析题目的错误原因、解题思路，并标注相关知识点。`;
 }
 
+export type AnalyzedError = ErrorAnalysis & { mistakeId: number | null };
+
 export async function analyzeError(
   params: AnalyzeErrorParams
-): Promise<ErrorAnalysis> {
+): Promise<AnalyzedError> {
   const { ocrText, ocrFormulas, studentAnswer, userGrade, userId, kpId, imageUrl } =
     params;
 
@@ -45,10 +47,12 @@ export async function analyzeError(
     errorSchema
   );
 
+  let mistakeId: number | null = null;
   if (userId != null) {
-    await pool.query(
+    const insertRes = await pool.query(
       `INSERT INTO mistakes (user_id, kp_id, image_url, ocr_text, student_answer, error_cause, solution_approach, related_kp_ids)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING id`,
       [
         userId,
         kpId ?? null,
@@ -60,7 +64,9 @@ export async function analyzeError(
         result.relatedKpIds,
       ]
     );
+    const row = insertRes.rows[0] as { id: number } | undefined;
+    mistakeId = row?.id ?? null;
   }
 
-  return result;
+  return { ...result, mistakeId };
 }
