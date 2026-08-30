@@ -11,6 +11,17 @@ import { MCQuestion } from "@/components/quiz/MCQuestion";
 import type { AllContent } from "@/lib/prompts/knowledge-content";
 import type { PracticeQuiz } from "@/lib/prompts/practice-quiz";
 
+interface KpMeta {
+  id: number;
+  title: string;
+  category: string;
+  subcategory: string;
+  breadcrumb: string[];
+  gradeLabel: string;
+  chapter: string;
+  createdAtLabel: string;
+}
+
 const DIFFICULTY_LABEL: Record<string, string> = {
   easy: "简单",
   medium: "中等",
@@ -30,6 +41,17 @@ export default function KnowledgeDetailPage() {
   }, [kpId, setSelectedKpId]);
 
   const [activeTab, setActiveTab] = useState<"intro" | "detail" | "examples" | "practice">("intro");
+
+  // 知识点元数据（标题、类别、年级章节、更新时间）
+  const metaQuery = useQuery<KpMeta>({
+    queryKey: ["kp-meta", kpId],
+    enabled: kpId !== null,
+    queryFn: async (): Promise<KpMeta> => {
+      const res = await fetch(`/api/knowledge/${kpId}/meta`);
+      if (!res.ok) throw new Error(`请求失败：${res.status}`);
+      return (await res.json()) as KpMeta;
+    },
+  });
 
   // 一次性请求全部教学内容（核心概念+详细讲解+例题），缓存后秒读
   const contentQuery = useQuery<AllContent>({
@@ -76,6 +98,42 @@ export default function KnowledgeDetailPage() {
         <MobileAccordion />
         <main className="p-4 lg:p-6">
           <Breadcrumb kpId={kpId} />
+
+          {/* 基本信息板块 */}
+          {metaQuery.data ? (
+            <div className="mb-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <h1 className="text-xl font-bold text-gray-900">
+                {metaQuery.data.title}
+              </h1>
+              <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                {metaQuery.data.category ? (
+                  <span className="rounded-full bg-blue-50 px-2 py-0.5 text-blue-600">
+                    {metaQuery.data.category}
+                  </span>
+                ) : null}
+                {metaQuery.data.subcategory ? (
+                  <span className="rounded-full bg-purple-50 px-2 py-0.5 text-purple-600">
+                    {metaQuery.data.subcategory}
+                  </span>
+                ) : null}
+                {metaQuery.data.gradeLabel ? (
+                  <span className="rounded-full bg-green-50 px-2 py-0.5 text-green-600">
+                    {metaQuery.data.gradeLabel}
+                  </span>
+                ) : null}
+              </div>
+              {metaQuery.data.chapter ? (
+                <p className="mt-2 text-xs text-gray-500">
+                  来源：{metaQuery.data.chapter}
+                </p>
+              ) : null}
+              {metaQuery.data.createdAtLabel ? (
+                <p className="mt-1 text-xs text-gray-400">
+                  更新时间：{metaQuery.data.createdAtLabel}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
 
           {/* Tab 导航 */}
           <div className="sticky top-0 z-10 -mx-4 mb-4 flex gap-1 border-b border-gray-200 bg-white px-4 lg:-mx-6 lg:px-6">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { SUBJECTS } from "@/lib/subjects";
 
 /**
  * 后台预热组件：用户空闲时自动轮询 /api/knowledge/prewarm，
@@ -56,17 +57,21 @@ export function ContentPrewarmer() {
       prewarmingRef.current = true;
 
       try {
-        const res = await fetch("/api/knowledge/prewarm");
-        const data = (await res.json()) as {
-          prewarmed: boolean;
-          reason?: string;
-          kpId?: number;
-          title?: string;
-        };
+        // 轮询所有学科，每次找一个未缓存的 KP
+        for (const subj of SUBJECTS) {
+          const res = await fetch(`/api/knowledge/prewarm?subject=${subj.value}`);
+          const data = (await res.json()) as {
+            prewarmed: boolean;
+            reason?: string;
+            kpId?: number;
+            title?: string;
+          };
 
-        if (data.reason === "all_done") {
-          // 全部完成，停止预热
-          return;
+          if (data.prewarmed) {
+            // 成功预热了一个，继续下一个
+            break;
+          }
+          // all_done 或 busy，尝试下一个学科
         }
       } catch {
         // 网络错误，静默忽略

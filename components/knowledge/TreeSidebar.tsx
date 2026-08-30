@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useKnowledgeStore } from "@/lib/stores/knowledge-store";
 import type { KnowledgeTreeNode } from "@/lib/db/knowledge-queries";
+import { SubjectSelector } from "./SubjectSelector";
 
 interface TreeResponse {
   trees: KnowledgeTreeNode[];
@@ -107,15 +108,16 @@ function TreeNode({
 
 export function TreeSidebar() {
   const [gradeFilter, setGradeFilter] = useState<GradeFilter>("all");
+  const [subject, setSubject] = useState("math");
 
   const queryParams = gradeFilter === "all"
-    ? ""
+    ? `?subject=${subject}`
     : gradeFilter === "小学" || gradeFilter === "初中" || gradeFilter === "高中"
-      ? `?stage=${gradeFilter}`
-      : `?grade=${gradeFilter.replace("g", "")}`;
+      ? `?subject=${subject}&stage=${gradeFilter}`
+      : `?subject=${subject}&grade=${gradeFilter.replace("g", "")}`;
 
   const { data, isLoading, error } = useQuery<TreeResponse>({
-    queryKey: ["knowledgeTree", gradeFilter],
+    queryKey: ["knowledgeTree", subject, gradeFilter],
     queryFn: async (): Promise<TreeResponse> => {
       const res = await fetch(`/api/knowledge/tree${queryParams}`);
       return (await res.json()) as TreeResponse;
@@ -137,6 +139,10 @@ export function TreeSidebar() {
   return (
     <aside className="hidden lg:block w-64 shrink-0 border-r border-gray-200 bg-white p-4 overflow-y-auto">
       <h2 className="mb-2 text-sm font-semibold text-gray-900">知识树</h2>
+      {/* 学科选择器 */}
+      <div className="mb-2">
+        <SubjectSelector value={subject} onChange={setSubject} />
+      </div>
       {/* 年级筛选器 */}
       <div className="mb-3 flex flex-wrap gap-1">
         {FILTER_OPTIONS.map((opt) => (

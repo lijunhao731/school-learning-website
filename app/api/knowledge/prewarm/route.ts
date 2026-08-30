@@ -17,21 +17,22 @@ export const dynamic = "force-dynamic";
 // 简单的内存锁，防止并发预热
 let prewarming = false;
 
-export async function GET() {
+export async function GET(request: Request) {
   // 防并发：如果正在生成，直接返回 busy
   if (prewarming) {
     return NextResponse.json({ prewarmed: false, reason: "busy" });
   }
 
   try {
+    const { searchParams } = new URL(request.url);
+    const subject = searchParams.get("subject") || "math";
+
     // 查找下一个未缓存 all_content 的知识点（有 grade_level 的叶子节点）
     // 优先五年级，然后按年级从小到大
-    // grade_level: 1-5 小学, 6-9 初中, 10-12 高中
-    // 排序：5 最优先(CASE=0)，然后 1,2,3,4,6,7,8,9,10,11,12
     const result = await pool.query(
       `SELECT kp.id, kp.title, kp.grade_level
        FROM knowledge_points kp
-       WHERE kp.subject = 'math'
+       WHERE kp.subject = $1
          AND kp.grade_level IS NOT NULL
          AND NOT EXISTS (
            SELECT 1 FROM content_cache cc
@@ -45,7 +46,8 @@ export async function GET() {
            ELSE kp.grade_level
          END,
          kp.id
-       LIMIT 1`
+       LIMIT 1`,
+      [subject]
     );
 
     if (!result.rows || result.rows.length === 0) {

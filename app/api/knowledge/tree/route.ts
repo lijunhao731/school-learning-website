@@ -30,24 +30,37 @@ function buildTreeFromNodes(nodes: RawKP[]): KnowledgeTreeNode[] {
 
 /**
  * Prune tree: keep only branches that have leaf nodes matching the grade filter.
+ * Non-leaf nodes with grade_level are also checked (e.g. module-level grade).
  */
 function filterTreeByGrade(
   trees: KnowledgeTreeNode[],
   filter: { stage?: string; grade?: number }
 ): KnowledgeTreeNode[] {
-  function leafMatches(node: KnowledgeTreeNode): boolean {
-    if (node.grade_level != null) {
-      if (filter.grade != null) return node.grade_level === filter.grade;
-      if (filter.stage === "小学") return node.grade_level <= 5;
-      if (filter.stage === "初中") return node.grade_level >= 6 && node.grade_level <= 9;
-      if (filter.stage === "高中") return node.grade_level >= 10;
-      return true;
+  function gradeMatches(gradeLevel: number): boolean {
+    if (filter.grade != null) return gradeLevel === filter.grade;
+    if (filter.stage === "小学") return gradeLevel <= 5;
+    if (filter.stage === "初中") return gradeLevel >= 6 && gradeLevel <= 9;
+    if (filter.stage === "高中") return gradeLevel >= 10;
+    return true;
+  }
+
+  function nodeMatches(node: KnowledgeTreeNode): boolean {
+    // Leaf or grade-tagged node: check directly
+    if (node.grade_level != null && node.children.length === 0) {
+      return gradeMatches(node.grade_level);
     }
-    return node.children.some((c) => leafMatches(c));
+    // Non-leaf: keep if any descendant matches
+    if (node.children.length === 0) return false;
+    return node.children.some((c) => nodeMatches(c));
   }
 
   function prune(node: KnowledgeTreeNode): KnowledgeTreeNode | null {
-    if (node.grade_level != null) return node; // leaf
+    // Leaf with grade: only keep if grade matches
+    if (node.children.length === 0) {
+      if (node.grade_level != null && !gradeMatches(node.grade_level)) return null;
+      return node;
+    }
+    // Non-leaf: prune children, keep if any survive
     const kept = node.children
       .map((c) => prune(c))
       .filter((c): c is KnowledgeTreeNode => c !== null);
@@ -56,7 +69,7 @@ function filterTreeByGrade(
   }
 
   return trees
-    .filter(leafMatches)
+    .filter(nodeMatches)
     .map(prune)
     .filter((n): n is KnowledgeTreeNode => n !== null);
 }
@@ -64,12 +77,14 @@ function filterTreeByGrade(
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
+    const subject = searchParams.get("subject") || "math";
     const stage = searchParams.get("stage") || undefined;
     const gradeParam = searchParams.get("grade");
     const grade = gradeParam ? parseInt(gradeParam, 10) : undefined;
 
     const result = await pool.query(
-      "SELECT * FROM knowledge_points WHERE subject = 'math' ORDER BY ltree_path::ltree"
+      "SELECT * FROM knowledge_points WHERE subject = $1 ORDER BY ltree_path::ltree",
+      [subject]
     );
     const nodes = result.rows as RawKP[];
 
