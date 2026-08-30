@@ -1,29 +1,49 @@
 import { NextResponse } from "next/server";
-import { generateMathTree } from "@/lib/llm/tree-generator";
-import { getTree } from "@/lib/db/knowledge-queries";
+import { pool } from "@/lib/db/client";
+import type { KnowledgePoint } from "@/lib/db/knowledge-queries";
+import type { KnowledgeTreeNode } from "@/lib/db/knowledge-queries";
 
 export const dynamic = "force-dynamic";
 
-const ALL_GRADES = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+function buildTreeFromNodes(nodes: KnowledgePoint[]): KnowledgeTreeNode[] {
+  const nodeMap = new Map<number, KnowledgeTreeNode>();
+  for (const node of nodes) {
+    nodeMap.set(node.id, { ...node, children: [] });
+  }
+
+  const roots: KnowledgeTreeNode[] = [];
+  for (const node of nodes) {
+    const treeNode = nodeMap.get(node.id)!;
+    if (node.parent_id === null) {
+      roots.push(treeNode);
+    } else {
+      const parent = nodeMap.get(node.parent_id);
+      if (parent) {
+        parent.children.push(treeNode);
+      }
+    }
+  }
+  return roots;
+}
 
 export async function GET() {
   try {
-    const existing = await getTree("math", 1);
-    if (existing) {
-      const trees = await Promise.all(
-        ALL_GRADES.map((g) => getTree("math", g))
-      );
-      return NextResponse.json({
-        trees: trees.filter((t) => t !== null),
-      });
+    // 获取所有数学知识点，按 ltree_path 排序保证树结构顺序
+    const result = await pool.query(
+      "SELECT * FROM knowledge_points WHERE subject = 'math' ORDER BY ltree_path::ltree"
+    );
+    const nodes = result.rows as KnowledgePoint[];
+
+    if (nodes.length === 0) {
+      return NextResponse.json({ trees: [] });
     }
 
-    const trees = await generateMathTree(ALL_GRADES);
+    const trees = buildTreeFromNodes(nodes);
     return NextResponse.json({ trees });
   } catch {
     return NextResponse.json(
-      { error: "AI 服务暂时不可用，请稍后重试" },
-      { status: 503 }
+      { error: "加载知识树失败，请稍后重试" },
+      { status: 500 }
     );
   }
 }
