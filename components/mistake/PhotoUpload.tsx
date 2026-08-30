@@ -13,7 +13,8 @@ const JPEG_QUALITY = 0.8;
 type Status = "idle" | "processing" | "uploading" | "done" | "error";
 
 export function PhotoUpload({ onUploaded, onError }: PhotoUploadProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const albumInputRef = useRef<HTMLInputElement>(null);
   const [status, setStatus] = useState<Status>("idle");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string>("");
@@ -166,11 +167,20 @@ export function PhotoUpload({ onUploaded, onError }: PhotoUploadProps) {
 
   return (
     <div className="w-full">
+      {/* 两个隐藏 input：拍照（带 capture）和相册（无 capture） */}
       <input
-        ref={inputRef}
+        ref={cameraInputRef}
         type="file"
         accept="image/*"
         capture="environment"
+        className="sr-only"
+        onChange={handleInputChange}
+        disabled={busy}
+      />
+      <input
+        ref={albumInputRef}
+        type="file"
+        accept="image/*"
         className="sr-only"
         onChange={handleInputChange}
         disabled={busy}
@@ -213,27 +223,39 @@ export function PhotoUpload({ onUploaded, onError }: PhotoUploadProps) {
           ) : null}
         </div>
       ) : (
-        <div
-          onClick={() => inputRef.current?.click()}
-          onDrop={handleDrop}
-          onDragOver={handleDragOver}
-          className="cursor-pointer border-2 border-dashed border-gray-300 rounded-lg p-6 text-center"
-        >
-          <p className="text-gray-600">
-            {status === "error" ? errorMsg : "点击拍照或选择图片上传"}
-          </p>
-          {status === "error" ? (
+        <div className="space-y-3">
+          <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleRetry();
-              }}
-              className="mt-2 rounded bg-blue-600 px-3 py-1 text-sm text-white hover:bg-blue-700"
+              onClick={() => cameraInputRef.current?.click()}
+              disabled={busy}
+              className="flex min-h-[80px] flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 p-4 text-gray-600 transition-colors hover:border-blue-400 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              重试
+              <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+                <circle cx="12" cy="13" r="3" />
+              </svg>
+              <span className="text-sm font-medium">拍照</span>
             </button>
-          ) : null}
+            <button
+              type="button"
+              onClick={() => albumInputRef.current?.click()}
+              disabled={busy}
+              className="flex min-h-[80px] flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 p-4 text-gray-600 transition-colors hover:border-blue-400 hover:text-blue-600 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+                <circle cx="9" cy="9" r="2" />
+                <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+              </svg>
+              <span className="text-sm font-medium">从相册选择</span>
+            </button>
+          </div>
+          {status === "error" ? (
+            <p className="text-center text-sm text-red-600">{errorMsg}</p>
+          ) : (
+            <p className="text-center text-sm text-gray-400">点击拍照或从相册选择错题图片</p>
+          )}
         </div>
       )}
     </div>

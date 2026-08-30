@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useKnowledgeStore } from "@/lib/stores/knowledge-store";
 import type { KnowledgeTreeNode } from "@/lib/db/knowledge-queries";
@@ -18,6 +19,7 @@ function AccordionNode({
   openIds: Set<number>;
   toggleOpen: (id: number) => void;
 }) {
+  const router = useRouter();
   const selectedKpId = useKnowledgeStore((s) => s.selectedKpId);
   const setSelectedKpId = useKnowledgeStore((s) => s.setSelectedKpId);
 
@@ -28,6 +30,7 @@ function AccordionNode({
   const handleClick = () => {
     setSelectedKpId(node.id);
     if (hasChildren) toggleOpen(node.id);
+    router.push(`/knowledge/${node.id}`);
   };
 
   return (

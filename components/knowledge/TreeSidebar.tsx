@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { useKnowledgeStore } from "@/lib/stores/knowledge-store";
 import type { KnowledgeTreeNode } from "@/lib/db/knowledge-queries";
 
@@ -32,6 +33,7 @@ function TreeNode({
   node: KnowledgeTreeNode;
   depth: number;
 }) {
+  const router = useRouter();
   const expandedNodes = useKnowledgeStore((s) => s.expandedNodes);
   const toggleNode = useKnowledgeStore((s) => s.toggleNode);
   const selectedKpId = useKnowledgeStore((s) => s.selectedKpId);
@@ -40,6 +42,11 @@ function TreeNode({
   const hasChildren = node.children.length > 0;
   const isExpanded = expandedNodes.has(node.id);
   const isActive = selectedKpId === node.id;
+
+  const handleClick = () => {
+    setSelectedKpId(node.id);
+    router.push(`/knowledge/${node.id}`);
+  };
 
   return (
     <li className="list-none">
@@ -63,7 +70,7 @@ function TreeNode({
         )}
         <button
           type="button"
-          onClick={() => setSelectedKpId(node.id)}
+          onClick={handleClick}
           className={`flex-1 truncate py-1 text-left text-sm ${
             isActive
               ? "font-medium text-blue-700"

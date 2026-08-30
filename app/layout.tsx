@@ -5,6 +5,7 @@ import { Providers } from "./providers";
 import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 import { ReminderBanner } from "@/components/notifications/ReminderBanner";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { HeaderNav } from "@/components/layout/HeaderNav";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -49,6 +50,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <Providers>
+          <HeaderNav />
           <ReminderBanner />
           {/* pb-16 为移动端 BottomNav 留空间，桌面端 lg:pb-0 */}
           <div className="flex-1 pb-16 lg:pb-0">{children}</div>
