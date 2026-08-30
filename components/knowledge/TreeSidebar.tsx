@@ -8,10 +8,9 @@ import type { KnowledgeTreeNode } from "@/lib/db/knowledge-queries";
 
 interface TreeResponse {
   trees: KnowledgeTreeNode[];
-  mode?: string;
 }
 
-type ViewMode = "logical" | "grade";
+type GradeFilter = "all" | "小学" | "初中" | "高中" | "g1" | "g2" | "g3" | "g4" | "g5" | "g6" | "g7" | "g8" | "g9" | "g10" | "g11" | "g12";
 
 const INDENT_CLASSES: readonly string[] = [
   "pl-0",
@@ -107,47 +106,60 @@ function TreeNode({
 }
 
 export function TreeSidebar() {
-  const [viewMode, setViewMode] = useState<ViewMode>("logical");
+  const [gradeFilter, setGradeFilter] = useState<GradeFilter>("all");
+
+  const queryParams = gradeFilter === "all"
+    ? ""
+    : gradeFilter === "小学" || gradeFilter === "初中" || gradeFilter === "高中"
+      ? `?stage=${gradeFilter}`
+      : `?grade=${gradeFilter.replace("g", "")}`;
+
   const { data, isLoading, error } = useQuery<TreeResponse>({
-    queryKey: ["knowledgeTree", viewMode],
+    queryKey: ["knowledgeTree", gradeFilter],
     queryFn: async (): Promise<TreeResponse> => {
-      const res = await fetch(`/api/knowledge/tree?mode=${viewMode}`);
+      const res = await fetch(`/api/knowledge/tree${queryParams}`);
       return (await res.json()) as TreeResponse;
     },
   });
 
+  const FILTER_OPTIONS: { value: GradeFilter; label: string }[] = [
+    { value: "all", label: "全部" },
+    { value: "小学", label: "小学" },
+    { value: "g1", label: "小1" },
+    { value: "g2", label: "小2" },
+    { value: "g3", label: "小3" },
+    { value: "g4", label: "小4" },
+    { value: "g5", label: "小5" },
+    { value: "初中", label: "初中" },
+    { value: "高中", label: "高中" },
+  ];
+
   return (
     <aside className="hidden lg:block w-64 shrink-0 border-r border-gray-200 bg-white p-4 overflow-y-auto">
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-gray-900">知识树</h2>
-      </div>
-      {/* 视图切换器 */}
-      <div className="mb-3 flex rounded-lg bg-gray-100 p-0.5">
-        <button
-          type="button"
-          onClick={() => setViewMode("logical")}
-          className={`flex-1 rounded-md py-1 text-xs font-medium transition-colors ${
-            viewMode === "logical" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"
-          }`}
-        >
-          按知识点
-        </button>
-        <button
-          type="button"
-          onClick={() => setViewMode("grade")}
-          className={`flex-1 rounded-md py-1 text-xs font-medium transition-colors ${
-            viewMode === "grade" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"
-          }`}
-        >
-          按年级
-        </button>
+      <h2 className="mb-2 text-sm font-semibold text-gray-900">知识树</h2>
+      {/* 年级筛选器 */}
+      <div className="mb-3 flex flex-wrap gap-1">
+        {FILTER_OPTIONS.map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => setGradeFilter(opt.value)}
+            className={`rounded px-2 py-0.5 text-xs font-medium transition-colors ${
+              gradeFilter === opt.value
+                ? "bg-blue-600 text-white"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
       </div>
       {isLoading ? (
         <p className="text-sm text-gray-500">加载中…</p>
       ) : error ? (
         <p className="text-sm text-red-500">加载失败</p>
       ) : !data || data.trees.length === 0 ? (
-        <p className="text-sm text-gray-500">暂无知识点</p>
+        <p className="text-sm text-gray-500">该年级暂无知识点</p>
       ) : (
         <ul className="m-0 p-0">
           {data.trees.map((node) => (
