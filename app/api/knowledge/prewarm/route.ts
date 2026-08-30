@@ -25,6 +25,9 @@ export async function GET() {
 
   try {
     // 查找下一个未缓存 all_content 的知识点（有 grade_level 的叶子节点）
+    // 优先五年级，然后按年级从小到大
+    // grade_level: 1-5 小学, 6-9 初中, 10-12 高中
+    // 排序：5 最优先(CASE=0)，然后 1,2,3,4,6,7,8,9,10,11,12
     const result = await pool.query(
       `SELECT kp.id, kp.title, kp.grade_level
        FROM knowledge_points kp
@@ -36,7 +39,12 @@ export async function GET() {
              AND cc.content_type = 'all_content'
              AND cc.expires_at > NOW()
          )
-       ORDER BY kp.grade_level, kp.id
+       ORDER BY
+         CASE kp.grade_level
+           WHEN 5 THEN 0
+           ELSE kp.grade_level
+         END,
+         kp.id
        LIMIT 1`
     );
 
