@@ -1,9 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSession } from "@/lib/auth/session";
-import {
-  generateExamples,
-  KnowledgePointNotFoundError,
-} from "@/lib/llm/content-generator";
+import { generateAllContent, KnowledgePointNotFoundError } from "@/lib/llm/content-generator";
 
 export const dynamic = "force-dynamic";
 
@@ -11,11 +7,6 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getSession();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const { id } = await params;
   const numId = Number(id);
   if (!Number.isInteger(numId) || numId <= 0) {
@@ -23,18 +14,12 @@ export async function GET(
   }
 
   try {
-    const result = await generateExamples(numId);
-    return NextResponse.json(result);
+    const content = await generateAllContent(numId);
+    return NextResponse.json({ examples: content.examples });
   } catch (error) {
     if (error instanceof KnowledgePointNotFoundError) {
-      return NextResponse.json(
-        { error: "Knowledge point not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Knowledge point not found" }, { status: 404 });
     }
-    return NextResponse.json(
-      { error: "AI 服务暂时不可用" },
-      { status: 503 }
-    );
+    return NextResponse.json({ error: "AI 服务暂时不可用" }, { status: 503 });
   }
 }

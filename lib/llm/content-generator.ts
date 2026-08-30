@@ -2,15 +2,11 @@ import { createTextStreamResponse } from "ai";
 import { streamLLMResponse } from "./stream";
 import { generateStructured } from "./generate";
 import {
-  systemPrompt as detailSystemPrompt,
-  buildIntroPrompt,
-  buildDetailPrompt,
-} from "@/lib/prompts/knowledge-detail";
-import {
-  systemPrompt as exampleSystemPrompt,
-  exampleSchema,
-  type ExampleProblems,
-} from "@/lib/prompts/example-problems";
+  systemPrompt as contentSystemPrompt,
+  allContentSchema,
+  buildAllContentPrompt,
+  type AllContent,
+} from "@/lib/prompts/knowledge-content";
 import {
   systemPrompt as practiceSystemPrompt,
   practiceSchema,
@@ -59,66 +55,31 @@ async function requireKnowledgePoint(kpId: number) {
   return kp;
 }
 
-export async function generateCoreIntro(
-  kpId: number
-): Promise<StreamResponseResult> {
-  const cached = await getCachedContent(kpId, "intro");
-  if (typeof cached === "string" && cached.length > 0) {
-    return { toTextStreamResponse: () => cachedTextResponse(cached) };
-  }
-
-  const kp = await requireKnowledgePoint(kpId);
-  const prompt =
-    `${buildIntroPrompt(kp.title, gradeLabel(kp.grade_level))}`;
-
-  const result = await streamLLMResponse(detailSystemPrompt, prompt);
-  void Promise.resolve(result.text)
-    .then((fullText) => cacheContent(kpId, "intro", fullText))
-    .catch(() => {});
-  return result;
-}
-
-export async function generateDetail(
-  kpId: number
-): Promise<StreamResponseResult> {
-  const cached = await getCachedContent(kpId, "detail");
-  if (typeof cached === "string" && cached.length > 0) {
-    return { toTextStreamResponse: () => cachedTextResponse(cached) };
-  }
-
-  const kp = await requireKnowledgePoint(kpId);
-  const prompt =
-    `${buildDetailPrompt(kp.title, gradeLabel(kp.grade_level))}`;
-
-  const result = await streamLLMResponse(detailSystemPrompt, prompt);
-  void Promise.resolve(result.text)
-    .then((fullText) => cacheContent(kpId, "detail", fullText))
-    .catch(() => {});
-  return result;
-}
-
-export async function generateExamples(
-  kpId: number
-): Promise<ExampleProblems> {
-  const cached = await getCachedContent(kpId, "examples");
+/**
+ * 一次性生成知识点的全部教学内容（核心概念+详细讲解+例题），缓存后按字段返回。
+ * 练习题仍由 generatePractice 单独动态生成。
+ */
+export async function generateAllContent(kpId: number): Promise<AllContent> {
+  // 先查缓存
+  const cached = await getCachedContent(kpId, "all_content");
   if (cached && typeof cached === "object") {
-    return cached as ExampleProblems;
+    return cached as AllContent;
   }
 
   const kp = await requireKnowledgePoint(kpId);
-  const prompt = `请为以下知识点生成例题。
-
-知识点标题：${kp.title}
-目标年级：${gradeLabel(kp.grade_level)}
-
-请提供3道例题，分别涵盖简单、中等、较难难度。每道题需包含题目、完整分步解答、每一步的解释说明、以及难度标签。所有内容用中文呈现。`;
-
-  const result = await generateStructured<ExampleProblems>(
-    exampleSystemPrompt,
-    prompt,
-    exampleSchema
+  const prompt = buildAllContentPrompt(
+    kp.title,
+    gradeLabel(kp.grade_level)
   );
-  await cacheContent(kpId, "examples", result);
+
+  const result = await generateStructured<AllContent>(
+    contentSystemPrompt,
+    prompt,
+    allContentSchema
+  );
+
+  // 缓存后下次秒读
+  await cacheContent(kpId, "all_content", result);
   return result;
 }
 

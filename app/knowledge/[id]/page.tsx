@@ -2,192 +2,20 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { useQuery, type UseQueryResult } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useKnowledgeStore } from "@/lib/stores/knowledge-store";
 import { TreeSidebar } from "@/components/knowledge/TreeSidebar";
 import { MobileAccordion } from "@/components/knowledge/MobileAccordion";
 import { Breadcrumb } from "@/components/knowledge/Breadcrumb";
 import { MCQuestion } from "@/components/quiz/MCQuestion";
-import type { ExampleProblems } from "@/lib/prompts/example-problems";
+import type { AllContent } from "@/lib/prompts/knowledge-content";
 import type { PracticeQuiz } from "@/lib/prompts/practice-quiz";
 
-type StreamStatus = "idle" | "loading" | "streaming" | "done" | "error";
-
-function useTextStream(url: string | null) {
-  const [text, setText] = useState("");
-  const [status, setStatus] = useState<StreamStatus>("idle");
-  const [error, setError] = useState<Error | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
-
-  const retry = () => {
-    setText("");
-    setError(null);
-    setStatus("idle");
-    setRetryCount((c) => c + 1);
-  };
-
-  useEffect(() => {
-    if (!url) return;
-    const controller = new AbortController();
-    let reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
-
-    setStatus("loading");
-    setText("");
-
-    (async () => {
-      try {
-        const res = await fetch(url, { signal: controller.signal });
-        if (!res.ok || !res.body) {
-          throw new Error(`请求失败：${res.status}`);
-        }
-        setStatus("streaming");
-        reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        let acc = "";
-        for (;;) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          if (value) {
-            acc += decoder.decode(value, { stream: true });
-            setText(acc);
-          }
-        }
-        acc += decoder.decode();
-        setText(acc);
-        setStatus("done");
-      } catch (err) {
-        if (controller.signal.aborted) return;
-        setError(err instanceof Error ? err : new Error(String(err)));
-        setStatus("error");
-      } finally {
-        if (reader) {
-          try {
-            reader.releaseLock();
-          } catch {
-            // ignore
-          }
-        }
-      }
-    })();
-
-    return () => {
-      controller.abort();
-    };
-  }, [url, retryCount]);
-
-  return { text, status, error, retry };
-}
-
-function StreamBlock({
-  status,
-  text,
-  error,
-  onRetry,
-}: {
-  status: StreamStatus;
-  text: string;
-  error: Error | null;
-  onRetry: () => void;
-}) {
-  if (status === "error") {
-    return (
-      <div className="space-y-2">
-        <p className="text-sm text-red-500">{error?.message ?? "加载失败"}</p>
-        <button
-          type="button"
-          onClick={onRetry}
-          className="rounded border border-gray-300 px-3 py-1 text-sm hover:bg-gray-50"
-        >
-          重试
-        </button>
-      </div>
-    );
-  }
-  if (status === "idle" || status === "loading" || !text) {
-    return <p className="animate-pulse text-gray-400">加载中...</p>;
-  }
-  return (
-    <div className="whitespace-pre-wrap text-gray-700">{text}</div>
-  );
-}
-
-function RetryButton({ onClick }: { onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="rounded border border-gray-300 px-3 py-1 text-sm hover:bg-gray-50"
-    >
-      重试
-    </button>
-  );
-}
-
-function ExamplesBlock({ query }: { query: UseQueryResult<ExampleProblems> }) {
-  if (query.isLoading) {
-    return <p className="animate-pulse text-gray-400">加载中...</p>;
-  }
-  if (query.error) {
-    return (
-      <div className="space-y-2">
-        <p className="text-sm text-red-500">例题加载失败</p>
-        <RetryButton onClick={() => void query.refetch()} />
-      </div>
-    );
-  }
-  const examples = query.data?.examples ?? [];
-  if (examples.length === 0) {
-    return <p className="text-gray-500">暂无例题</p>;
-  }
-  return (
-    <div className="space-y-4">
-      {examples.map((ex, i) => (
-        <div key={i} className="space-y-2 border rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-900">
-              例 {i + 1}
-            </span>
-            <span className="text-xs text-gray-500">{ex.difficulty}</span>
-          </div>
-          <p className="text-gray-900">{ex.question}</p>
-          <div className="whitespace-pre-wrap text-sm text-gray-700">
-            <span className="font-medium">解答：</span>
-            {ex.solution}
-          </div>
-          <div className="text-sm text-gray-600">
-            <span className="font-medium">解析：</span>
-            {ex.explanation}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function PracticeBlock({ query }: { query: UseQueryResult<PracticeQuiz> }) {
-  if (query.isLoading) {
-    return <p className="animate-pulse text-gray-400">加载中...</p>;
-  }
-  if (query.error) {
-    return (
-      <div className="space-y-2">
-        <p className="text-sm text-red-500">练习加载失败</p>
-        <RetryButton onClick={() => void query.refetch()} />
-      </div>
-    );
-  }
-  const questions = query.data?.questions ?? [];
-  if (questions.length === 0) {
-    return <p className="text-gray-500">暂无练习题</p>;
-  }
-  return (
-    <div className="space-y-4">
-      {questions.map((q, i) => (
-        <MCQuestion key={q.id ?? i} question={q} />
-      ))}
-    </div>
-  );
-}
+const DIFFICULTY_LABEL: Record<string, string> = {
+  easy: "简单",
+  medium: "中等",
+  hard: "较难",
+};
 
 export default function KnowledgeDetailPage() {
   const params = useParams();
@@ -203,23 +31,18 @@ export default function KnowledgeDetailPage() {
 
   const [activeTab, setActiveTab] = useState<"intro" | "detail" | "examples" | "practice">("intro");
 
-  const introUrl = kpId !== null ? `/api/knowledge/${kpId}/intro` : null;
-  // detail 只在对应 tab 激活时才请求，避免一进页面就拉取全部内容
-  const detailUrl = kpId !== null && activeTab === "detail" ? `/api/knowledge/${kpId}/detail` : null;
-
-  const intro = useTextStream(introUrl);
-  const detail = useTextStream(detailUrl);
-
-  const examplesQuery = useQuery<ExampleProblems>({
-    queryKey: ["examples", kpId],
-    enabled: kpId !== null && activeTab === "examples",
-    queryFn: async (): Promise<ExampleProblems> => {
-      const res = await fetch(`/api/knowledge/${kpId}/examples`);
+  // 一次性请求全部教学内容（核心概念+详细讲解+例题），缓存后秒读
+  const contentQuery = useQuery<AllContent>({
+    queryKey: ["kp-content", kpId],
+    enabled: kpId !== null,
+    queryFn: async (): Promise<AllContent> => {
+      const res = await fetch(`/api/knowledge/${kpId}/content`);
       if (!res.ok) throw new Error(`请求失败：${res.status}`);
-      return (await res.json()) as ExampleProblems;
+      return (await res.json()) as AllContent;
     },
   });
 
+  // 练习题独立动态生成，仅在练习 tab 激活时加载
   const practiceQuery = useQuery<PracticeQuiz>({
     queryKey: ["practice", kpId],
     enabled: kpId !== null && activeTab === "practice",
@@ -275,38 +98,106 @@ export default function KnowledgeDetailPage() {
             ))}
           </div>
 
-          {/* Tab 内容 */}
-          {activeTab === "intro" && (
-            <section>
-              <StreamBlock
-                status={intro.status}
-                text={intro.text}
-                error={intro.error}
-                onRetry={intro.retry}
-              />
-            </section>
-          )}
+          {/* 全局加载/错误状态 */}
+          {contentQuery.isLoading ? (
+            <div className="py-12 text-center">
+              <p className="animate-pulse text-gray-400">
+                正在生成知识点内容，请稍候...
+              </p>
+              <p className="mt-1 text-xs text-gray-400">
+                首次生成需要一些时间，生成后会自动缓存
+              </p>
+            </div>
+          ) : contentQuery.isError ? (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+              <p>{contentQuery.error instanceof Error ? contentQuery.error.message : "加载失败"}</p>
+              <button
+                type="button"
+                onClick={() => void contentQuery.refetch()}
+                className="mt-2 min-h-[44px] rounded border border-red-300 px-3 py-1 text-sm hover:bg-red-100"
+              >
+                重试
+              </button>
+            </div>
+          ) : contentQuery.data ? (
+            <>
+              {/* 核心概念 */}
+              {activeTab === "intro" && (
+                <section className="whitespace-pre-wrap text-gray-700">
+                  {contentQuery.data.intro}
+                </section>
+              )}
 
-          {activeTab === "detail" && (
-            <section>
-              <StreamBlock
-                status={detail.status}
-                text={detail.text}
-                error={detail.error}
-                onRetry={detail.retry}
-              />
-            </section>
-          )}
+              {/* 详细讲解 */}
+              {activeTab === "detail" && (
+                <section className="whitespace-pre-wrap text-gray-700">
+                  {contentQuery.data.detail}
+                </section>
+              )}
 
-          {activeTab === "examples" && (
-            <section>
-              <ExamplesBlock query={examplesQuery} />
-            </section>
-          )}
+              {/* 例题 */}
+              {activeTab === "examples" && (
+                <section className="space-y-4">
+                  {(contentQuery.data.examples ?? []).length === 0 ? (
+                    <p className="text-gray-500">暂无例题</p>
+                  ) : (
+                    contentQuery.data.examples.map((ex, i) => (
+                      <div key={i} className="space-y-2 rounded-lg border p-4">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-gray-900">
+                            例 {i + 1}
+                          </span>
+                          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
+                            {DIFFICULTY_LABEL[ex.difficulty] ?? ex.difficulty}
+                          </span>
+                        </div>
+                        <p className="text-gray-900">{ex.question}</p>
+                        <div className="whitespace-pre-wrap text-sm text-gray-700">
+                          <span className="font-medium">解答：</span>
+                          {ex.solution}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          <span className="font-medium">解析：</span>
+                          {ex.explanation}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </section>
+              )}
+            </>
+          ) : null}
 
+          {/* 练习（独立加载） */}
           {activeTab === "practice" && (
-            <section>
-              <PracticeBlock query={practiceQuery} />
+            <section className="space-y-4">
+              {practiceQuery.isLoading ? (
+                <div className="py-8 text-center">
+                  <p className="animate-pulse text-gray-400">
+                    正在生成练习题，请稍候...
+                  </p>
+                  <p className="mt-1 text-xs text-gray-400">
+                    首次生成需要一些时间，生成后会自动缓存
+                  </p>
+                </div>
+              ) : practiceQuery.isError ? (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                  <p>练习题加载失败</p>
+                  <button
+                    type="button"
+                    onClick={() => void practiceQuery.refetch()}
+                    className="mt-2 min-h-[44px] rounded border border-red-300 px-3 py-1 text-sm hover:bg-red-100"
+                  >
+                    重试
+                  </button>
+                </div>
+              ) : (practiceQuery.data?.questions ?? []).length === 0 ? (
+                <p className="text-gray-500">暂无练习题</p>
+              ) : (
+                (practiceQuery.data?.questions ?? []).map((q, i) => (
+                  <MCQuestion key={q.id ?? i} question={q} />
+                ))
+              )}
             </section>
           )}
         </main>
