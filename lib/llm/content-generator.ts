@@ -3,7 +3,8 @@ import { streamLLMResponse } from "./stream";
 import { generateStructured } from "./generate";
 import {
   systemPrompt as detailSystemPrompt,
-  buildUserPrompt as buildDetailUserPrompt,
+  buildIntroPrompt,
+  buildDetailPrompt,
 } from "@/lib/prompts/knowledge-detail";
 import {
   systemPrompt as exampleSystemPrompt,
@@ -68,8 +69,7 @@ export async function generateCoreIntro(
 
   const kp = await requireKnowledgePoint(kpId);
   const prompt =
-    `${buildDetailUserPrompt(kp.title, gradeLabel(kp.grade_level))}\n\n` +
-    `请简明扼要地介绍核心概念，举一个直观易懂的例子。用中文回答。`;
+    `${buildIntroPrompt(kp.title, gradeLabel(kp.grade_level))}`;
 
   const result = await streamLLMResponse(detailSystemPrompt, prompt);
   void Promise.resolve(result.text)
@@ -88,8 +88,7 @@ export async function generateDetail(
 
   const kp = await requireKnowledgePoint(kpId);
   const prompt =
-    `${buildDetailUserPrompt(kp.title, gradeLabel(kp.grade_level))}\n\n` +
-    `请提供深入、全面的讲解，包含多个详细例题，并充分覆盖常见易错点。用中文回答。`;
+    `${buildDetailPrompt(kp.title, gradeLabel(kp.grade_level))}`;
 
   const result = await streamLLMResponse(detailSystemPrompt, prompt);
   void Promise.resolve(result.text)
