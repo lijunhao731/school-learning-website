@@ -107,10 +107,10 @@ export function MobileAccordion() {
   const [subject, setSubject] = useState("math");
 
   const queryParams = gradeFilter === "all"
-    ? `?subject=${subject}`
+    ? `?subject=${encodeURIComponent(subject)}`
     : gradeFilter === "小学" || gradeFilter === "初中" || gradeFilter === "高中"
-      ? `?subject=${subject}&stage=${gradeFilter}`
-      : `?subject=${subject}&grade=${gradeFilter.replace("g", "")}`;
+      ? `?subject=${encodeURIComponent(subject)}&stage=${encodeURIComponent(gradeFilter)}`
+      : `?subject=${encodeURIComponent(subject)}&grade=${gradeFilter.replace("g", "")}`;
 
   const { data, isLoading, error } = useQuery<TreeResponse>({
     queryKey: ["knowledgeTree", subject, gradeFilter],

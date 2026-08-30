@@ -45,11 +45,11 @@ function filterTreeByGrade(
   }
 
   function nodeMatches(node: KnowledgeTreeNode): boolean {
-    // Leaf or grade-tagged node: check directly
-    if (node.grade_level != null && node.children.length === 0) {
+    // Node with grade_level: check directly
+    if (node.grade_level != null) {
       return gradeMatches(node.grade_level);
     }
-    // Non-leaf: keep if any descendant matches
+    // Non-leaf without grade: keep if any descendant matches
     if (node.children.length === 0) return false;
     return node.children.some((c) => nodeMatches(c));
   }
@@ -60,7 +60,9 @@ function filterTreeByGrade(
       if (node.grade_level != null && !gradeMatches(node.grade_level)) return null;
       return node;
     }
-    // Non-leaf: prune children, keep if any survive
+    // Non-leaf with grade_level: if grade doesn't match, prune entire branch
+    if (node.grade_level != null && !gradeMatches(node.grade_level)) return null;
+    // Non-leaf without grade_level (domain root): prune children, keep if any survive
     const kept = node.children
       .map((c) => prune(c))
       .filter((c): c is KnowledgeTreeNode => c !== null);
