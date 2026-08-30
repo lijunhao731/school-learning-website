@@ -201,13 +201,14 @@ export default function KnowledgeDetailPage() {
     setSelectedKpId(kpId);
   }, [kpId, setSelectedKpId]);
 
+  const [activeTab, setActiveTab] = useState<"intro" | "detail" | "examples" | "practice">("intro");
+
   const introUrl = kpId !== null ? `/api/knowledge/${kpId}/intro` : null;
-  const detailUrl = kpId !== null ? `/api/knowledge/${kpId}/detail` : null;
+  // detail 只在对应 tab 激活时才请求，避免一进页面就拉取全部内容
+  const detailUrl = kpId !== null && activeTab === "detail" ? `/api/knowledge/${kpId}/detail` : null;
 
   const intro = useTextStream(introUrl);
   const detail = useTextStream(detailUrl);
-
-  const [activeTab, setActiveTab] = useState<"intro" | "detail" | "examples" | "practice">("intro");
 
   const examplesQuery = useQuery<ExampleProblems>({
     queryKey: ["examples", kpId],
