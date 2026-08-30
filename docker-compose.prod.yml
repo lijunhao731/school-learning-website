@@ -34,6 +34,8 @@ services:
       LLM_MODEL_PREFERRED: ${LLM_MODEL_PREFERRED:-mm-l2}
       LLM_MODEL_FALLBACK: ${LLM_MODEL_FALLBACK:-mm-l1}
       NODE_ENV: production
+      # HTTP 部署时不设 COOKIE_SECURE；HTTPS 域名部署时设为 1
+      COOKIE_SECURE: ${COOKIE_SECURE:-0}
     volumes:
       - uploads:/app/uploads
     healthcheck:
