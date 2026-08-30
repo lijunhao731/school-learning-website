@@ -33,7 +33,7 @@ export interface StreamResponseResult {
 }
 
 function gradeLabel(gradeLevel: number | null): string {
-  return gradeLevel != null ? `Grade ${gradeLevel}` : "K12";
+  return gradeLevel != null ? `小学${gradeLevel}年级` : "中小学";
 }
 
 function stringToTextStream(text: string): ReadableStream<string> {
@@ -66,7 +66,7 @@ export async function generateCoreIntro(
   const kp = await requireKnowledgePoint(kpId);
   const prompt =
     `${buildDetailUserPrompt(kp.title, gradeLabel(kp.grade_level))}\n\n` +
-    `Keep the introduction concise and focused on the core concept with one brief intuitive example.`;
+    `请简明扼要地介绍核心概念，举一个直观易懂的例子。用中文回答。`;
 
   const result = await streamLLMResponse(detailSystemPrompt, prompt);
   void Promise.resolve(result.text)
@@ -86,7 +86,7 @@ export async function generateDetail(
   const kp = await requireKnowledgePoint(kpId);
   const prompt =
     `${buildDetailUserPrompt(kp.title, gradeLabel(kp.grade_level))}\n\n` +
-    `Provide an in-depth, comprehensive explanation with multiple worked examples and thorough coverage of common pitfalls.`;
+    `请提供深入、全面的讲解，包含多个详细例题，并充分覆盖常见易错点。用中文回答。`;
 
   const result = await streamLLMResponse(detailSystemPrompt, prompt);
   void Promise.resolve(result.text)
@@ -104,12 +104,12 @@ export async function generateExamples(
   }
 
   const kp = await requireKnowledgePoint(kpId);
-  const prompt = `Please generate worked example problems for the following knowledge point.
+  const prompt = `请为以下知识点生成例题。
 
-Knowledge point title: ${kp.title}
-Target grade: ${gradeLabel(kp.grade_level)}
+知识点标题：${kp.title}
+目标年级：${gradeLabel(kp.grade_level)}
 
-Provide 3 examples covering easy, medium, and hard difficulty. For each, include the question, a full step-by-step solution, a clear explanation of each step, and a difficulty label.`;
+请提供3道例题，分别涵盖简单、中等、较难难度。每道题需包含题目、完整分步解答、每一步的解释说明、以及难度标签。所有内容用中文呈现。`;
 
   const result = await generateStructured<ExampleProblems>(
     exampleSystemPrompt,
@@ -129,12 +129,12 @@ export async function generatePractice(
   }
 
   const kp = await requireKnowledgePoint(kpId);
-  const prompt = `Please generate a practice quiz for the following knowledge point.
+  const prompt = `请为以下知识点生成练习题。
 
-Knowledge point title: ${kp.title}
-Target grade: ${gradeLabel(kp.grade_level)}
+知识点标题：${kp.title}
+目标年级：${gradeLabel(kp.grade_level)}
 
-Provide 5 single-choice questions. Each question must have exactly 4 choices, the correct answer as a zero-based index into the choices array, and an explanation of why it is correct. Give each question a unique string id.`;
+请提供5道单选题。每道题必须恰好有4个选项，以零基索引标明正确答案在 choices 数组中的位置，并解释为什么该答案正确。每道题需有唯一的字符串 id。所有内容用中文呈现。`;
 
   const result = await generateStructured<PracticeQuiz>(
     practiceSystemPrompt,

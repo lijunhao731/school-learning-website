@@ -1,14 +1,16 @@
-export const systemPrompt = `You are a K12 math teacher. You explain knowledge points clearly and accurately, using grade-appropriate language. For each knowledge point, provide a thorough yet accessible explanation: the core idea, key formulas or definitions, common pitfalls, and at least one intuitive example. Be concise, precise, and pedagogically sound.`;
+export const systemPrompt = `你是一位经验丰富的中小学数学老师。你用清晰、准确的语言讲解知识点，使用适合学生年级的表达方式。对于每个知识点，提供全面而易懂的解释：核心思想、关键公式或定义、常见错误、以及至少一个直观的例子。语言简洁、准确、符合教学规律。所有内容必须用中文呈现。`;
 
 export function buildUserPrompt(kpTitle: string, grade: string): string {
-  return `Please provide a detailed teaching explanation for the following knowledge point.
+  return `请为以下知识点提供详细的教学讲解。
 
-Knowledge point title: ${kpTitle}
-Target grade: ${grade}
+知识点标题：${kpTitle}
+目标年级：${grade}
 
-Include:
-1. Core concept and definition
-2. Key formulas or rules (if any)
-3. A worked example
-4. Common student pitfalls and how to avoid them`;
+请包括以下内容：
+1. 核心概念与定义
+2. 关键公式或规则（如有）
+3. 一个详细的例题及解答过程
+4. 学生常见错误及避免方法
+
+请用中文回答，数学公式可以用文字描述。`;
 }

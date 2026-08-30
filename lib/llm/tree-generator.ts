@@ -14,7 +14,7 @@ export async function generateMathTree(
     return trees.filter((t): t is KnowledgeTreeNode => t !== null);
   }
 
-  const userPrompt = `Generate a knowledge point tree for Chinese math grades ${grades.join(", ")}. Include chapters and knowledge points for each grade level.`;
+  const userPrompt = `请为中国中小学数学年级 ${grades.join(", ")} 生成知识点树。包含每个年级的章节和知识点。所有内容用中文呈现。`;
   const tree = await generateStructured<KnowledgeTree>(
     systemPrompt,
     userPrompt,

@@ -207,9 +207,11 @@ export default function KnowledgeDetailPage() {
   const intro = useTextStream(introUrl);
   const detail = useTextStream(detailUrl);
 
+  const [activeTab, setActiveTab] = useState<"intro" | "detail" | "examples" | "practice">("intro");
+
   const examplesQuery = useQuery<ExampleProblems>({
     queryKey: ["examples", kpId],
-    enabled: kpId !== null,
+    enabled: kpId !== null && activeTab === "examples",
     queryFn: async (): Promise<ExampleProblems> => {
       const res = await fetch(`/api/knowledge/${kpId}/examples`);
       if (!res.ok) throw new Error(`请求失败：${res.status}`);
@@ -219,7 +221,7 @@ export default function KnowledgeDetailPage() {
 
   const practiceQuery = useQuery<PracticeQuiz>({
     queryKey: ["practice", kpId],
-    enabled: kpId !== null,
+    enabled: kpId !== null && activeTab === "practice",
     queryFn: async (): Promise<PracticeQuiz> => {
       const res = await fetch(`/api/knowledge/${kpId}/practice`);
       if (!res.ok) throw new Error(`请求失败：${res.status}`);
@@ -236,43 +238,76 @@ export default function KnowledgeDetailPage() {
     );
   }
 
+  const TABS = [
+    { key: "intro" as const, label: "核心概念" },
+    { key: "detail" as const, label: "详细讲解" },
+    { key: "examples" as const, label: "例题" },
+    { key: "practice" as const, label: "练习" },
+  ];
+
   return (
     <div className="flex">
       <TreeSidebar />
       <div className="min-w-0 flex-1">
         <MobileAccordion />
-        <main className="space-y-8 p-4 lg:p-6">
+        <main className="p-4 lg:p-6">
           <Breadcrumb kpId={kpId} />
 
-          <section>
-            <h1 className="mb-3 text-xl font-bold text-gray-900">核心概念</h1>
-            <StreamBlock
-              status={intro.status}
-              text={intro.text}
-              error={intro.error}
-              onRetry={intro.retry}
-            />
-          </section>
+          {/* Tab 导航 */}
+          <div className="sticky top-0 z-10 -mx-4 mb-4 flex gap-1 border-b border-gray-200 bg-white px-4 lg:-mx-6 lg:px-6">
+            {TABS.map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setActiveTab(tab.key)}
+                className={`relative whitespace-nowrap py-3 text-sm font-medium transition-colors ${
+                  activeTab === tab.key
+                    ? "text-blue-600"
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                {tab.label}
+                {activeTab === tab.key ? (
+                  <span className="absolute inset-x-0 bottom-0 h-0.5 bg-blue-600" />
+                ) : null}
+              </button>
+            ))}
+          </div>
 
-          <section>
-            <h2 className="mb-3 text-xl font-bold text-gray-900">详细讲解</h2>
-            <StreamBlock
-              status={detail.status}
-              text={detail.text}
-              error={detail.error}
-              onRetry={detail.retry}
-            />
-          </section>
+          {/* Tab 内容 */}
+          {activeTab === "intro" && (
+            <section>
+              <StreamBlock
+                status={intro.status}
+                text={intro.text}
+                error={intro.error}
+                onRetry={intro.retry}
+              />
+            </section>
+          )}
 
-          <section>
-            <h2 className="mb-3 text-xl font-bold text-gray-900">例题</h2>
-            <ExamplesBlock query={examplesQuery} />
-          </section>
+          {activeTab === "detail" && (
+            <section>
+              <StreamBlock
+                status={detail.status}
+                text={detail.text}
+                error={detail.error}
+                onRetry={detail.retry}
+              />
+            </section>
+          )}
 
-          <section>
-            <h2 className="mb-3 text-xl font-bold text-gray-900">练习</h2>
-            <PracticeBlock query={practiceQuery} />
-          </section>
+          {activeTab === "examples" && (
+            <section>
+              <ExamplesBlock query={examplesQuery} />
+            </section>
+          )}
+
+          {activeTab === "practice" && (
+            <section>
+              <PracticeBlock query={practiceQuery} />
+            </section>
+          )}
         </main>
       </div>
     </div>
