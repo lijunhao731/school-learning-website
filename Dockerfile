@@ -3,7 +3,7 @@ FROM node:22-alpine AS dev
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm install
 EXPOSE 3000
 CMD ["npm", "run", "dev"]
 
@@ -12,7 +12,7 @@ FROM node:22-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm install
 
 # Stage 2: Build
 FROM node:22-alpine AS builder
