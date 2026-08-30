@@ -1,0 +1,37 @@
+- generic [active] [ref=f1e1]:
+  - banner [ref=f1e2]:
+    - generic [ref=f1e3]:
+      - link "K12 学习平台" [ref=f1e4] [cursor=pointer]:
+        - /url: /
+      - navigation [ref=f1e5]:
+        - link "知识" [ref=f1e6] [cursor=pointer]:
+          - /url: /knowledge
+        - link "错题" [ref=f1e7] [cursor=pointer]:
+          - /url: /mistakes
+        - link "复习" [ref=f1e8] [cursor=pointer]:
+          - /url: /review
+        - link "我的" [ref=f1e9] [cursor=pointer]:
+          - /url: /dashboard
+    - generic [ref=f1e10]:
+      - generic [ref=f1e11]: stu2
+      - button "退出" [ref=f1e12]
+  - main [ref=f1e14]:
+    - generic [ref=f1e15]:
+      - generic [ref=f1e16]:
+        - generic [ref=f1e17]: S
+        - generic [ref=f1e18]:
+          - paragraph [ref=f1e19]: stu2
+          - paragraph [ref=f1e20]: "@stu2"
+      - button "退出登录" [ref=f1e21]
+    - generic [ref=f1e22]:
+      - heading "复习仪表盘" [level=1] [ref=f1e23]
+      - paragraph [ref=f1e24]: 今日复习进度、掌握概览与近期错题
+    - generic [ref=f1e25]:
+      - heading "欢迎使用 K12 学习平台" [level=2] [ref=f1e26]
+      - paragraph [ref=f1e27]: 还没有复习记录或错题。从浏览知识体系开始你的学习之旅，或者上传一道错题让系统帮你分析。
+      - generic [ref=f1e28]:
+        - link "浏览知识体系" [ref=f1e29] [cursor=pointer]:
+          - /url: /knowledge
+        - link "上传错题" [ref=f1e30] [cursor=pointer]:
+          - /url: /mistakes/upload
+  - alert [ref=f1e31]
