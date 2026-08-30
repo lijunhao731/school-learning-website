@@ -4,7 +4,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme_strong_password}
       POSTGRES_DB: ${POSTGRES_DB:-school_learning}
     volumes:
       - pgdata:/var/lib/postgresql/data
@@ -26,7 +26,7 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-school_learning}
-      LLM_API_KEY: ${LLM_API_KEY:?Set LLM_API_KEY}
+      LLM_API_KEY: ${LLM_API_KEY:-gpustack_53402c89fc1b8ff0_7f055b69257ea707820ef6fae0804aa3}
       LLM_BASE_URL: ${LLM_BASE_URL:-http://36.133.77.84:64025/v1}
       LLM_MODEL_PREFERRED: ${LLM_MODEL_PREFERRED:-mm-l2}
       LLM_MODEL_FALLBACK: ${LLM_MODEL_FALLBACK:-mm-l1}
