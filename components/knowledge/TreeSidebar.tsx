@@ -26,6 +26,12 @@ function indentClass(depth: number): string {
   return INDENT_CLASSES[idx];
 }
 
+function gradeLabel(gradeLevel: number): string {
+  if (gradeLevel <= 5) return `小${gradeLevel}`;
+  if (gradeLevel <= 9) return `初${gradeLevel - 5}`;
+  return `高${gradeLevel - 9}`;
+}
+
 function TreeNode({
   node,
   depth,
@@ -78,6 +84,11 @@ function TreeNode({
           }`}
         >
           {node.title}
+          {!hasChildren && node.grade_level != null ? (
+            <span className="ml-1 text-xs text-gray-400">
+              [{gradeLabel(node.grade_level)}]
+            </span>
+          ) : null}
         </button>
       </div>
       {hasChildren && isExpanded ? (

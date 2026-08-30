@@ -61,13 +61,19 @@ export default function KnowledgeListPage() {
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">知识体系</h1>
                 <p className="mt-1 text-sm text-gray-500">
-                  从左侧知识树选择知识点开始学习，或点击下方推荐继续。
+                  按知识领域浏览，或从左侧知识树选择具体知识点开始学习。
                 </p>
               </div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {tree.map((node) => {
-                  const firstLeaf = findFirstLeaf([node]);
-                  const targetId = firstLeaf?.id ?? node.id;
+                  // 领域根节点：展示为卡片，点击进入第一个模块
+                  const firstModule = node.children[0];
+                  const firstLeaf = firstModule ? findFirstLeaf([firstModule]) : null;
+                  const targetId = firstLeaf?.id ?? firstModule?.id ?? node.id;
+                  const moduleCount = node.children.length;
+                  const kpCount = node.children.reduce(
+                    (sum, mod) => sum + mod.children.length, 0
+                  );
                   return (
                     <button
                       key={node.id}
@@ -79,8 +85,8 @@ export default function KnowledgeListPage() {
                         {node.title}
                       </h3>
                       <p className="mt-1 text-sm text-gray-500">
-                        {node.children.length > 0
-                          ? `${node.children.length} 个子知识点`
+                        {moduleCount > 0
+                          ? `${moduleCount} 个模块 · ${kpCount} 个知识点`
                           : "点击查看详情"}
                       </p>
                     </button>

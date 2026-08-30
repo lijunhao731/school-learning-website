@@ -33,7 +33,10 @@ export interface StreamResponseResult {
 }
 
 function gradeLabel(gradeLevel: number | null): string {
-  return gradeLevel != null ? `小学${gradeLevel}年级` : "中小学";
+  if (gradeLevel == null) return "中小学";
+  if (gradeLevel <= 5) return `小学${gradeLevel}年级`;
+  if (gradeLevel <= 9) return `初中${gradeLevel - 5}年级`;
+  return `高中${gradeLevel - 9}年级`;
 }
 
 function stringToTextStream(text: string): ReadableStream<string> {
