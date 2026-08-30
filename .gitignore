@@ -37,6 +37,9 @@ yarn-error.log*
 # uploads (root-level only — user-uploaded images, not the API route at app/api/uploads/)
 /uploads/
 
+# postgres data (bind mount in prod compose)
+/pgdata/
+
 # omo internal state
 .omo/
 
