@@ -6,6 +6,7 @@ import { InstallPrompt } from "@/components/pwa/InstallPrompt";
 import { ReminderBanner } from "@/components/notifications/ReminderBanner";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { HeaderNav } from "@/components/layout/HeaderNav";
+import { ContentPrewarmer } from "@/components/knowledge/ContentPrewarmer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -57,6 +58,7 @@ export default function RootLayout({
         </Providers>
         <InstallPrompt />
         <BottomNav />
+        <ContentPrewarmer />
       </body>
     </html>
   );
