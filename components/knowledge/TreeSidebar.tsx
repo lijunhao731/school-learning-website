@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useKnowledgeStore } from "@/lib/stores/knowledge-store";
@@ -7,7 +8,10 @@ import type { KnowledgeTreeNode } from "@/lib/db/knowledge-queries";
 
 interface TreeResponse {
   trees: KnowledgeTreeNode[];
+  mode?: string;
 }
+
+type ViewMode = "logical" | "grade";
 
 const INDENT_CLASSES: readonly string[] = [
   "pl-0",
@@ -103,17 +107,41 @@ function TreeNode({
 }
 
 export function TreeSidebar() {
+  const [viewMode, setViewMode] = useState<ViewMode>("logical");
   const { data, isLoading, error } = useQuery<TreeResponse>({
-    queryKey: ["knowledgeTree"],
+    queryKey: ["knowledgeTree", viewMode],
     queryFn: async (): Promise<TreeResponse> => {
-      const res = await fetch("/api/knowledge/tree");
+      const res = await fetch(`/api/knowledge/tree?mode=${viewMode}`);
       return (await res.json()) as TreeResponse;
     },
   });
 
   return (
     <aside className="hidden lg:block w-64 shrink-0 border-r border-gray-200 bg-white p-4 overflow-y-auto">
-      <h2 className="mb-3 text-sm font-semibold text-gray-900">知识树</h2>
+      <div className="mb-3 flex items-center justify-between">
+        <h2 className="text-sm font-semibold text-gray-900">知识树</h2>
+      </div>
+      {/* 视图切换器 */}
+      <div className="mb-3 flex rounded-lg bg-gray-100 p-0.5">
+        <button
+          type="button"
+          onClick={() => setViewMode("logical")}
+          className={`flex-1 rounded-md py-1 text-xs font-medium transition-colors ${
+            viewMode === "logical" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"
+          }`}
+        >
+          按知识点
+        </button>
+        <button
+          type="button"
+          onClick={() => setViewMode("grade")}
+          className={`flex-1 rounded-md py-1 text-xs font-medium transition-colors ${
+            viewMode === "grade" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"
+          }`}
+        >
+          按年级
+        </button>
+      </div>
       {isLoading ? (
         <p className="text-sm text-gray-500">加载中…</p>
       ) : error ? (

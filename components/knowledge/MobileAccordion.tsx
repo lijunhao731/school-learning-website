@@ -8,7 +8,10 @@ import type { KnowledgeTreeNode } from "@/lib/db/knowledge-queries";
 
 interface TreeResponse {
   trees: KnowledgeTreeNode[];
+  mode?: string;
 }
+
+type ViewMode = "logical" | "grade";
 
 function AccordionNode({
   node,
@@ -67,10 +70,11 @@ function AccordionNode({
 }
 
 export function MobileAccordion() {
+  const [viewMode, setViewMode] = useState<ViewMode>("logical");
   const { data, isLoading, error } = useQuery<TreeResponse>({
-    queryKey: ["knowledgeTree"],
+    queryKey: ["knowledgeTree", viewMode],
     queryFn: async (): Promise<TreeResponse> => {
-      const res = await fetch("/api/knowledge/tree");
+      const res = await fetch(`/api/knowledge/tree?mode=${viewMode}`);
       return (await res.json()) as TreeResponse;
     },
   });
@@ -87,8 +91,29 @@ export function MobileAccordion() {
 
   return (
     <div className="lg:hidden border-b border-gray-200 bg-white">
-      <div className="px-4 py-2 text-sm font-semibold text-gray-900">
-        知识树
+      <div className="flex items-center justify-between px-4 py-2">
+        <span className="text-sm font-semibold text-gray-900">知识树</span>
+      </div>
+      {/* 视图切换器 */}
+      <div className="mx-4 mb-2 flex rounded-lg bg-gray-100 p-0.5">
+        <button
+          type="button"
+          onClick={() => setViewMode("logical")}
+          className={`flex-1 rounded-md py-1 text-xs font-medium transition-colors ${
+            viewMode === "logical" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"
+          }`}
+        >
+          按知识点
+        </button>
+        <button
+          type="button"
+          onClick={() => setViewMode("grade")}
+          className={`flex-1 rounded-md py-1 text-xs font-medium transition-colors ${
+            viewMode === "grade" ? "bg-white text-blue-600 shadow-sm" : "text-gray-500"
+          }`}
+        >
+          按年级
+        </button>
       </div>
       {isLoading ? (
         <p className="px-4 py-2 text-sm text-gray-500">加载中…</p>
