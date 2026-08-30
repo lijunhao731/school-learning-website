@@ -1,4 +1,4 @@
-{$DOMAIN:localhost} {
+http://{$DOMAIN:localhost} {
 	reverse_proxy app:3000 {
 		# 关闭缓冲以支持 SSE 流式响应
 		flush_interval -1
