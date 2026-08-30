@@ -7,7 +7,7 @@ import { useKnowledgeStore } from "@/lib/stores/knowledge-store";
 import type { KnowledgeTreeNode } from "@/lib/db/knowledge-queries";
 
 interface TreeResponse {
-  tree: KnowledgeTreeNode[];
+  trees: KnowledgeTreeNode[];
 }
 
 function AccordionNode({
@@ -94,10 +94,10 @@ export function MobileAccordion() {
         <p className="px-4 py-2 text-sm text-gray-500">加载中…</p>
       ) : error ? (
         <p className="px-4 py-2 text-sm text-red-500">加载失败</p>
-      ) : !data || data.tree.length === 0 ? (
+      ) : !data || data.trees.length === 0 ? (
         <p className="px-4 py-2 text-sm text-gray-500">暂无知识点</p>
       ) : (
-        data.tree.map((node) => (
+        data.trees.map((node) => (
           <AccordionNode
             key={node.id}
             node={node}

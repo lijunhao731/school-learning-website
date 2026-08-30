@@ -6,7 +6,7 @@ import { useKnowledgeStore } from "@/lib/stores/knowledge-store";
 import type { KnowledgeTreeNode } from "@/lib/db/knowledge-queries";
 
 interface TreeResponse {
-  tree: KnowledgeTreeNode[];
+  trees: KnowledgeTreeNode[];
 }
 
 const INDENT_CLASSES: readonly string[] = [
@@ -107,11 +107,11 @@ export function TreeSidebar() {
         <p className="text-sm text-gray-500">加载中…</p>
       ) : error ? (
         <p className="text-sm text-red-500">加载失败</p>
-      ) : !data || data.tree.length === 0 ? (
+      ) : !data || data.trees.length === 0 ? (
         <p className="text-sm text-gray-500">暂无知识点</p>
       ) : (
         <ul className="m-0 p-0">
-          {data.tree.map((node) => (
+          {data.trees.map((node) => (
             <TreeNode key={node.id} node={node} depth={0} />
           ))}
         </ul>

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 
 interface DashboardData {
@@ -99,6 +100,7 @@ export default function DashboardPage() {
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
+      <AccountCard />
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">复习仪表盘</h1>
         <p className="mt-1 text-sm text-gray-500">
@@ -371,6 +373,65 @@ function EmptyState() {
           上传错题
         </Link>
       </div>
+    </section>
+  );
+}
+
+function AccountCard() {
+  const router = useRouter();
+  const { data: me } = useQuery<{
+    id: number;
+    username: string;
+    name: string | null;
+    grade: number | null;
+  } | null>({
+    queryKey: ["me"],
+    queryFn: async () => {
+      const res = await fetch("/api/auth/me");
+      if (res.status === 401) return null;
+      if (!res.ok) return null;
+      return res.json();
+    },
+    retry: false,
+  });
+
+  async function handleLogout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/login");
+    router.refresh();
+  }
+
+  if (!me) return null;
+
+  const gradeLabel = me.grade
+    ? me.grade <= 6
+      ? `小学${me.grade}年级`
+      : `初中${me.grade - 6}年级`
+    : null;
+
+  return (
+    <section className="mb-6 flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-600">
+          {(me.name || me.username).charAt(0).toUpperCase()}
+        </div>
+        <div>
+          <p className="text-sm font-medium text-gray-900">
+            {me.name || me.username}
+          </p>
+          <p className="text-xs text-gray-500">
+            @{me.username}
+            {gradeLabel ? ` · ${gradeLabel}` : ""}
+          </p>
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={handleLogout}
+        className="min-h-[44px] rounded-lg border border-gray-300 px-4 py-1.5 text-sm text-gray-600 transition-colors hover:bg-gray-50"
+      >
+        退出登录
+      </button>
     </section>
   );
 }

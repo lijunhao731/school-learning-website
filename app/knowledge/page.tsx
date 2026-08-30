@@ -7,7 +7,7 @@ import { MobileAccordion } from "@/components/knowledge/MobileAccordion";
 import type { KnowledgeTreeNode } from "@/lib/db/knowledge-queries";
 
 interface TreeResponse {
-  tree: KnowledgeTreeNode[];
+  trees: KnowledgeTreeNode[];
 }
 
 export default function KnowledgeListPage() {
@@ -22,7 +22,7 @@ export default function KnowledgeListPage() {
     },
   });
 
-  const tree = data?.tree ?? [];
+  const tree = data?.trees ?? [];
   const isEmpty = !isLoading && !error && tree.length === 0;
 
   // 找第一个叶子节点作为默认导航目标
