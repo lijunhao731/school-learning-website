@@ -22,11 +22,35 @@ export function buildAllContentPrompt(kpTitle: string, grade: string): string {
   return `知识点：${kpTitle}
 年级：${grade}
 
-请一次性生成这个知识点的全部教学内容，包含三部分：
+请生成这个知识点的全部教学内容，严格按照以下JSON格式返回，不要包含任何其他文字：
 
-1. intro（核心概念）：用3-5句话介绍定义和核心思想。如果有关键公式或定义直接给出。不要举例题。
-2. detail（详细讲解）：讲解计算方法或解题步骤、关键技巧和注意事项、常见错误及避免方法。不要重复例题。
-3. examples（例题）：提供3道例题（简单、中等、较难各一道），每道含题目、分步解答、解析说明。
+{
+  "intro": "核心概念：3-5句话介绍定义和核心思想，含关键公式，不含例题",
+  "detail": "详细讲解：方法步骤、关键技巧、常见错误，不含例题",
+  "examples": [
+    {
+      "question": "题目内容",
+      "solution": "完整分步解答过程",
+      "explanation": "每一步的解释说明",
+      "difficulty": "easy"
+    },
+    {
+      "question": "题目内容",
+      "solution": "完整分步解答过程",
+      "explanation": "每一步的解释说明",
+      "difficulty": "medium"
+    },
+    {
+      "question": "题目内容",
+      "solution": "完整分步解答过程",
+      "explanation": "每一步的解释说明",
+      "difficulty": "hard"
+    }
+  ]
+}
 
-所有内容用中文，数学公式用文字描述。`;
+要求：
+- intro 和 detail 用中文，数学公式用文字描述
+- examples 提供3道例题，difficulty 分别为 easy、medium、hard
+- 只返回JSON，不要有markdown代码块标记，不要有其他说明文字`;
 }
