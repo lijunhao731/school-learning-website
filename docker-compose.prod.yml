@@ -49,8 +49,9 @@ services:
     environment:
       DOMAIN: ${DOMAIN:-localhost}
     ports:
-      - "80:80"
-      - "443:443"
+      # 外网 60080 -> 服务器 3000 -> caddy:80 -> app:3000
+      - "3000:80"
+      - "3443:443"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data
