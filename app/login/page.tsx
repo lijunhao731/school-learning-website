@@ -53,8 +53,8 @@ function LoginForm() {
         return;
       }
 
-      router.push(redirect);
-      router.refresh();
+      // 用 window.location 强制跳转，确保 cookie 生效后整页加载
+      window.location.href = redirect;
     } catch {
       setError("网络错误，请重试");
       setLoading(false);
